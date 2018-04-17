@@ -12,6 +12,9 @@ Vue.component('app-header', {
           <li class="nav-item active">
             <router-link class="nav-link" to="/">Home <span class="sr-only">(current)</span></router-link>
           </li>
+          <li class="nav-item active">
+            <router-link class="nav-link" to="/upload/">Upload <span class="sr-only">(current)</span></router-link>
+          </li>
         </ul>
       </div>
     </nav>
@@ -40,10 +43,73 @@ const Home = Vue.component('home', {
     }
 });
 
+const uploadform= Vue.component('upload-form', {
+    template: `
+        <div class="upload">
+            <h2>Upload Form</h2>
+            <div >
+                <ul class="list">
+                    <li v-for="resp in response"class="list">
+                        {{ resp.message }}
+                        {{resp.error}}
+                    </li>
+                    <li v-for="resp in error"class="list">
+                        {{resp.error[0]}} <br>
+                        {{resp.error[1]}}
+                    </li>
+                </ul>
+                <form id="uploadForm"  @submit.prevent="uploadPhoto" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="msg">Description</label>
+                        <textarea id="msg" class='form-control' name="description"></textarea><br>
+                        <label for="msg">Photo Upload</label><br>
+                        <input type="file" name="upload"/>
+                    </div>
+                    <button  class="btn btn-primary" type="submit">Submit</button>
+               </form>
+            </div>
+        </div>
+    `,
+    data: function() {
+       return {
+           response: [],
+           error: []
+       };
+    },
+    methods: {
+        uploadPhoto: function () {
+            let self = this;
+            let uploadForm = document.getElementById('uploadForm');
+            let form_data = new FormData(uploadForm);
+            fetch("/api/upload", { 
+                method: 'POST', 
+                body: form_data,
+                headers: {
+                    'X-CSRFToken': token
+                },
+                credentials: 'same-origin'
+            })
+                .then(function (response) {
+                return response.json();
+                })
+                .then(function (jsonResponse) {
+                // display a success message
+                console.log(jsonResponse);
+                self.response = jsonResponse.result;
+                self.error = jsonResponse.errors;
+                })
+                .catch(function (error) {
+                console.log(error);
+            });
+        }
+    }
+});
+
 // Define Routes
 const router = new VueRouter({
     routes: [
-        { path: "/", component: Home }
+        { path: "/", component: Home },
+        { path: "/upload/", component: uploadform }
     ]
 });
 
